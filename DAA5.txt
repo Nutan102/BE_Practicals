@@ -1,0 +1,61 @@
+def print_board(board):
+    for row in board:
+        print(" ".join(str(x) for x in row))
+
+
+def is_safe(board, row, col, n):
+    # Check the left side of the current row
+    for j in range(col):
+        if board[row][j] == 1:
+            return False
+
+    # Check upper-left diagonal
+    i, j = row, col
+    while i >= 0 and j >= 0:
+        if board[i][j] == 1:
+            return False
+        i -= 1
+        j -= 1
+
+    # Check lower-left diagonal
+    i, j = row, col
+    while i < n and j >= 0:
+        if board[i][j] == 1:
+            return False
+        i += 1
+        j -= 1
+
+    return True
+
+
+def solve_n_queens(board, col, n):
+    if col >= n:
+        return True
+
+    for row in range(n):
+        if is_safe(board, row, col, n):
+            board[row][col] = 1
+
+            if solve_n_queens(board, col + 1, n):
+                return True
+
+            board[row][col] = 0
+
+    return False
+
+
+n = int(input("Enter the value of N: "))
+
+if n <= 0:
+    print("N must be a positive integer.")
+else:
+    board = [[0] * n for _ in range(n)]
+
+    # Place the first queen in the first row
+    board[0][0] = 1
+
+    if solve_n_queens(board, 1, n):
+        print("\nSolution:")
+        print_board(board)
+    else:
+        print("No solution exists with the first queen fixed at (1, 1).")

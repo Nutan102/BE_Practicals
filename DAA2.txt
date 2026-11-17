@@ -1,0 +1,37 @@
+import heapq
+
+def huffman_encoding(characters, frequencies):
+    heap = []
+
+    for char, freq in zip(characters, frequencies):
+        heapq.heappush(heap, (freq, char, {char: ""}))
+
+    while len(heap) > 1:
+        freq1, char1, codes1 = heapq.heappop(heap)
+        freq2, char2, codes2 = heapq.heappop(heap)
+
+        for char in codes1:
+            codes1[char] = "0" + codes1[char]
+
+        for char in codes2:
+            codes2[char] = "1" + codes2[char]
+
+        merged_codes = {**codes1, **codes2}
+        merged_char = char1 + char2
+
+        heapq.heappush(
+            heap,
+            (freq1 + freq2, merged_char, merged_codes)
+        )
+
+    return heap[0][2]
+
+
+characters = ['A', 'B', 'C', 'D', 'E']
+frequencies = [5, 9, 12, 13, 16]
+
+codes = huffman_encoding(characters, frequencies)
+
+print("Huffman Codes:")
+for char in characters:
+    print(char, ":", codes[char])

@@ -1,0 +1,89 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, AgglomerativeClustering
+
+# Load dataset
+data = pd.read_csv(
+    "sales_data_sample.csv",
+    encoding="latin1"
+)
+
+print("First five records:")
+print(data.head())
+
+# Select numerical features
+features = ["QUANTITYORDERED", "PRICEEACH", "SALES"]
+X = data[features].dropna()
+
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Elbow Method
+inertia = []
+
+for k in range(1, 11):
+    model = KMeans(
+        n_clusters=k,
+        random_state=42,
+        n_init=10
+    )
+    model.fit(X_scaled)
+    inertia.append(model.inertia_)
+
+# Plot the Elbow graph
+plt.plot(range(1, 11), inertia, marker="o")
+plt.xlabel("Number of Clusters (K)")
+plt.ylabel("Inertia")
+plt.title("Elbow Method")
+plt.xticks(range(1, 11))
+plt.grid(True)
+plt.show()
+
+# Select the number of clusters based on the elbow graph
+k = 3
+
+# K-Means Clustering
+kmeans = KMeans(
+    n_clusters=k,
+    random_state=42,
+    n_init=10
+)
+
+kmeans_labels = kmeans.fit_predict(X_scaled)
+
+print("\nK-Means Cluster Counts:")
+print(pd.Series(kmeans_labels).value_counts().sort_index())
+
+# Hierarchical Clustering
+hierarchical = AgglomerativeClustering(n_clusters=k)
+hierarchical_labels = hierarchical.fit_predict(X_scaled)
+
+print("\nHierarchical Cluster Counts:")
+print(pd.Series(hierarchical_labels).value_counts().sort_index())
+
+# Plot K-Means clusters using two features
+plt.scatter(
+    X_scaled[:, 0],
+    X_scaled[:, 2],
+    c=kmeans_labels
+)
+
+plt.xlabel("Standardized Quantity Ordered")
+plt.ylabel("Standardized Sales")
+plt.title("K-Means Clustering")
+plt.show()
+
+# Plot Hierarchical clusters using two features
+plt.scatter(
+    X_scaled[:, 0],
+    X_scaled[:, 2],
+    c=hierarchical_labels
+)
+
+plt.xlabel("Standardized Quantity Ordered")
+plt.ylabel("Standardized Sales")
+plt.title("Hierarchical Clustering")
+plt.show()

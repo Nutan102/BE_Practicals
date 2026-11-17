@@ -1,0 +1,104 @@
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    classification_report
+)
+
+# 1. Load dataset
+data = pd.read_csv("emails.csv")
+
+print("First five records:")
+print(data.head())
+
+# 2. Identify text and label columns
+# Common Kaggle format: Category and Message
+if {"Category", "Message"}.issubset(data.columns):
+    text_col = "Message"
+    label_col = "Category"
+elif {"text", "label"}.issubset(data.columns):
+    text_col = "text"
+    label_col = "label"
+else:
+    raise ValueError(
+        "Please check the dataset columns and set text_col and label_col."
+    )
+
+# 3. Preprocess data
+data = data[[text_col, label_col]].dropna()
+
+X = data[text_col].astype(str)
+y = data[label_col].astype(str).str.strip().str.lower()
+
+# Map common spam/ham labels to 1/0
+label_mapping = {
+    "ham": 0,
+    "normal": 0,
+    "not spam": 0,
+    "0": 0,
+    "spam": 1,
+    "abnormal": 1,
+    "1": 1
+}
+
+y = y.map(label_mapping)
+
+# Remove rows with labels that could not be mapped
+valid = y.notna()
+X = X[valid]
+y = y[valid].astype(int)
+
+if y.nunique() != 2:
+    raise ValueError("The dataset must contain both spam and normal emails.")
+
+# 4. Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# 5. Convert text into numerical features
+vectorizer = TfidfVectorizer(
+    stop_words="english",
+    max_features=5000
+)
+
+X_train_tfidf = vectorizer.fit_transform(X_train)
+X_test_tfidf = vectorizer.transform(X_test)
+
+# 6. Train KNN classifier
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train_tfidf, y_train)
+
+pred_knn = knn.predict(X_test_tfidf)
+
+# 7. Train SVM classifier
+svm = LinearSVC(random_state=42)
+svm.fit(X_train_tfidf, y_train)
+
+pred_svm = svm.predict(X_test_tfidf)
+
+# 8. Evaluate models
+def evaluate_model(name, actual, predicted):
+    print("\n", name)
+    print("Accuracy:", round(accuracy_score(actual, predicted), 4))
+    print("Confusion Matrix:")
+    print(confusion_matrix(actual, predicted, labels=[0, 1]))
+    print("\nClassification Report:")
+    print(classification_report(
+        actual,
+        predicted,
+        labels=[0, 1],
+        target_names=["Normal", "Spam"],
+        zero_division=0
+    ))
+
+evaluate_model("KNN Classifier", y_test, pred_knn)
+evaluate_model("SVM Classifier", y_test, pred_svm)

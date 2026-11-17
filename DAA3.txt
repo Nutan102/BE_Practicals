@@ -1,0 +1,30 @@
+def fractional_knapsack(capacity, items):
+    # Each item contains (profit, weight)
+    items.sort(key=lambda x: x[0] / x[1], reverse=True)
+
+    total_profit = 0
+
+    for profit, weight in items:
+        if capacity == 0:
+            break
+
+        if weight <= capacity:
+            capacity -= weight
+            total_profit += profit
+            print(f"Taken full item: Profit={profit}, Weight={weight}")
+        else:
+            fraction = capacity / weight
+            total_profit += profit * fraction
+
+            print(f"Taken {fraction:.2f} fraction of item")
+            capacity = 0
+
+    return total_profit
+
+
+items = [(60, 10), (100, 20), (120, 30)]
+capacity = 50
+
+max_profit = fractional_knapsack(capacity, items)
+
+print("Maximum Profit:", max_profit)
